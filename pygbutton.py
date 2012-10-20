@@ -84,6 +84,11 @@ class PygButton(object):
         self._bgcolor = bgcolor
         self._fgcolor = fgcolor
 
+        if font is None:
+            self._font = PYGBUTTON_FONT
+        else:
+            self._font = font
+
         # tracks the state of the button
         self.buttonDown = False # is the button currently pushed down?
         self.mouseOverButton = False # is the mouse currently hovering over the button?
@@ -202,7 +207,7 @@ class PygButton(object):
         self.surfaceHighlight.fill(self.bgcolor)
 
         # draw caption text
-        captionSurf = PYGBUTTON_FONT.render(self._caption, True, self.fgcolor, self.bgcolor)
+        captionSurf = self._font.render(self._caption, True, self.fgcolor, self.bgcolor)
         captionRect = captionSurf.get_rect()
         captionRect.center = int(w / 2), int(h / 2)
         self.surfaceNormal.blit(captionSurf, captionRect)
@@ -321,8 +326,18 @@ class PygButton(object):
         self.update()
 
 
+    def _propGetFont(self):
+        return self._font
+
+
+    def _propSetFont(self, setting):
+        self._font = setting
+        self.update()
+
+
     caption = property(_propGetCaption, _propSetCaption)
     rect = property(_propGetRect, _propSetRect)
     visible = property(_propGetVisible, _propSetVisible)
     fgcolor = property(_propGetFgColor, _propSetFgColor)
     bgcolor = property(_propGetBgColor, _propSetBgColor)
+    font = property(_propGetFont, _propSetFont)
