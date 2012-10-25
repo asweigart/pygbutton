@@ -41,10 +41,10 @@ from pygame.locals import *
 pygame.font.init()
 PYGBUTTON_FONT = pygame.font.Font('freesansbold.ttf', 14)
 
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-DARKGRAY = (64, 64, 64)
-GRAY = (128, 128, 128)
+BLACK     = (  0,   0,   0)
+WHITE     = (255, 255, 255)
+DARKGRAY  = ( 64,  64,  64)
+GRAY      = (128, 128, 128)
 LIGHTGRAY = (212, 208, 200)
 
 class PygButton(object):
@@ -101,7 +101,7 @@ class PygButton(object):
             self.surfaceNormal = pygame.Surface(self._rect.size)
             self.surfaceDown = pygame.Surface(self._rect.size)
             self.surfaceHighlight = pygame.Surface(self._rect.size)
-            self.update() # draw the initial button images
+            self._update() # draw the initial button images
         else:
             # create the surfaces for a custom image button
             self.setSurfaces(normal, down, highlight)
@@ -190,30 +190,30 @@ class PygButton(object):
                 surfaceObj.blit(self.surfaceNormal, self._rect)
 
 
-    def update(self):
+    def _update(self):
         """Redraw the button's Surface object. Call this method when the button has changed appearance."""
         if self.customSurfaces:
-            self.surfaceNormal    = pygame.transform.smoothscale(self.surfaceNormal, self._rect.size)
-            self.surfaceDown      = pygame.transform.smoothscale(self.surfaceDown, self._rect.size)
-            self.surfaceHighlight = pygame.transform.smoothscale(self.surfaceHighlight, self._rect.size)
+            self.surfaceNormal    = pygame.transform.smoothscale(self.origSurfaceNormal, self._rect.size)
+            self.surfaceDown      = pygame.transform.smoothscale(self.origSurfaceDown, self._rect.size)
+            self.surfaceHighlight = pygame.transform.smoothscale(self.origSurfaceHighlight, self._rect.size)
             return
 
         w = self._rect.width # syntactic sugar
         h = self._rect.height # syntactic sugar
 
-        # fill with background color
+        # fill background color for all buttons
         self.surfaceNormal.fill(self.bgcolor)
         self.surfaceDown.fill(self.bgcolor)
         self.surfaceHighlight.fill(self.bgcolor)
 
-        # draw caption text
+        # draw caption text for all buttons
         captionSurf = self._font.render(self._caption, True, self.fgcolor, self.bgcolor)
         captionRect = captionSurf.get_rect()
         captionRect.center = int(w / 2), int(h / 2)
         self.surfaceNormal.blit(captionSurf, captionRect)
         self.surfaceDown.blit(captionSurf, captionRect)
 
-        # draw border for normal surface
+        # draw border for normal button
         pygame.draw.rect(self.surfaceNormal, BLACK, pygame.Rect((0, 0, w, h)), 1) # black border around everything
         pygame.draw.line(self.surfaceNormal, WHITE, (1, 1), (w - 2, 1))
         pygame.draw.line(self.surfaceNormal, WHITE, (1, 1), (1, h - 2))
@@ -222,7 +222,7 @@ class PygButton(object):
         pygame.draw.line(self.surfaceNormal, GRAY, (2, h - 2), (w - 2, h - 2))
         pygame.draw.line(self.surfaceNormal, GRAY, (w - 2, 2), (w - 2, h - 2))
 
-        # draw border for down surface
+        # draw border for down button
         pygame.draw.rect(self.surfaceDown, BLACK, pygame.Rect((0, 0, w, h)), 1) # black border around everything
         pygame.draw.line(self.surfaceDown, WHITE, (1, 1), (w - 2, 1))
         pygame.draw.line(self.surfaceDown, WHITE, (1, 1), (1, h - 2))
@@ -231,7 +231,7 @@ class PygButton(object):
         pygame.draw.line(self.surfaceDown, GRAY, (2, h - 3), (2, 2))
         pygame.draw.line(self.surfaceDown, GRAY, (2, 2), (w - 3, 2))
 
-        # draw border for highlight surface
+        # draw border for highlight button
         self.surfaceHighlight = self.surfaceNormal
 
 
@@ -260,25 +260,21 @@ class PygButton(object):
             highlightSurface = normalSurface
 
         if type(normalSurface) == str:
-            normalSurface = pygame.image.load(normalSurface)
+            self.origSurfaceNormal = pygame.image.load(normalSurface)
         if type(downSurface) == str:
-            downSurface = pygame.image.load(downSurface)
+            self.origSurfaceDown = pygame.image.load(downSurface)
         if type(highlightSurface) == str:
-            highlightSurface = pygame.image.load(highlightSurface)
+            self.origSurfaceHighlight = pygame.image.load(highlightSurface)
 
-        if normalSurface.get_size() != downSurface.get_size() != highlightSurface.get_size():
+        if self.origSurfaceNormal.get_size() != self.origSurfaceDown.get_size() != self.origSurfaceHighlight.get_size():
             raise Exception('foo')
 
-        self.surfaceNormal = normalSurface
-        self.surfaceDown = downSurface
-        self.surfaceHighlight = highlightSurface
+        self.surfaceNormal = self.origSurfaceNormal
+        self.surfaceDown = self.origSurfaceDown
+        self.surfaceHighlight = self.origSurfaceHighlight
         self.customSurfaces = True
-        self._rect = pygame.Rect((self._rect.left, self._rect.top, normalSurface.get_width(), normalSurface.get_height()))
+        self._rect = pygame.Rect((self._rect.left, self._rect.top, self.surfaceNormal.get_width(), self.surfaceNormal.get_height()))
 
-
-    def clearSurfaces(self):
-        self.customSurfaces = False
-        self.update()
 
 
     def _propGetCaption(self):
@@ -286,8 +282,9 @@ class PygButton(object):
 
 
     def _propSetCaption(self, captionText):
+        self.customSurfaces = False
         self._caption = captionText
-        self.update()
+        self._update()
 
 
     def _propGetRect(self):
@@ -296,7 +293,7 @@ class PygButton(object):
 
     def _propSetRect(self, newRect):
         # Note that changing the attributes of the Rect won't update the button. You have to re-assign the rect member.
-        self.update()
+        self._update()
         self._rect = newRect
 
 
@@ -313,8 +310,9 @@ class PygButton(object):
 
 
     def _propSetFgColor(self, setting):
+        self.customSurfaces = False
         self._fgcolor = setting
-        self.update()
+        self._update()
 
 
     def _propGetBgColor(self):
@@ -322,8 +320,9 @@ class PygButton(object):
 
 
     def _propSetBgColor(self, setting):
+        self.customSurfaces = False
         self._bgcolor = setting
-        self.update()
+        self._update()
 
 
     def _propGetFont(self):
@@ -331,8 +330,9 @@ class PygButton(object):
 
 
     def _propSetFont(self, setting):
+        self.customSurfaces = False
         self._font = setting
-        self.update()
+        self._update()
 
 
     caption = property(_propGetCaption, _propSetCaption)
