@@ -18,7 +18,7 @@ def main():
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
     DISPLAYSURFACE = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
-    pygame.display.set_caption('PygButton Test 3')
+    pygame.display.set_caption('PygButton Test 1')
 
     # buttons that change the window background color
     buttonWhiteWinBg = pygbutton.PygButton((50, 50, 60, 30), 'White')
@@ -48,7 +48,7 @@ def main():
 
     while True: # main game loop
         for event in pygame.event.get(): # event handling loop
-            if event.type == QUIT:
+            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit()
 

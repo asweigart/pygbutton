@@ -11,13 +11,13 @@ def main():
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
     DISPLAYSURFACE = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
-    pygame.display.set_caption('PygButton Test 2')
+    pygame.display.set_caption('PygButton Test 3')
 
     catButt = pygbutton.PygButton((50, 100, 200, 30), normal='catbutton_normal.png', down='catbutton_down.png', highlight='catbutton_highlight.png')
 
     while True: # main game loop
         for event in pygame.event.get(): # event handling loop
-            if event.type == QUIT:
+            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit()
 
