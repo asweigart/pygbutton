@@ -1,0 +1,5 @@
+include *.md
+recursive-include docs *.rst
+recursive-include docs Makefile
+recursive-include pygbutton *.py
+recursive-include tests *.py
