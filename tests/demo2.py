@@ -1,4 +1,7 @@
-import pygame, pygbutton, sys
+import sys, os
+sys.path.insert(0, os.path.abspath('..'))
+
+import pygame, pygbutton
 from pygame.locals import *
 import platform
 
