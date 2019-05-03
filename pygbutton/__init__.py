@@ -48,7 +48,7 @@ GRAY      = (128, 128, 128)
 LIGHTGRAY = (212, 208, 200)
 
 class PygButton(object):
-    def __init__(self, rect=None, caption='', bgcolor=LIGHTGRAY, fgcolor=BLACK, font=None, normal=None, down=None, highlight=None):
+    def __init__(self, rect=None, caption='', bgcolor=LIGHTGRAY, fgcolor=BLACK, font=None, normal=None, down=None, highlight=None, hotkeys=[]):
         """Create a new button object. Parameters:
             rect - The size and position of the button as a pygame.Rect object
                 or 4-tuple of integers.
@@ -65,6 +65,8 @@ class PygButton(object):
                 appearance.
             highlight - A pygame.Surface object for the button's appearance
                 when the mouse is over it.
+            hotkeys - A list of pygame keyboard constants, will be coerced
+                to a list if only single value given
 
             If the Surface objects are used, then the caption, bgcolor,
             fgcolor, and font parameters are ignored (and vice versa).
@@ -95,6 +97,7 @@ class PygButton(object):
         self.lastMouseDownOverButton = False # was the last mouse down event over the mouse button? (Used to track clicks.)
         self._visible = True # is the button visible
         self.customSurfaces = False # button starts as a text button instead of having custom images for each surface
+        self.hotkeys = hotkeys if type(hotkeys) is list else [hotkeys]
 
         if normal is None:
             # create the surfaces for a text button
@@ -124,60 +127,76 @@ class PygButton(object):
         when mouseUp() or mouseClick() is called. lastMouseDownOverButton is
         always False when mouseUp() or mouseClick() is called."""
 
-        if eventObj.type not in (MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN) or not self._visible:
-            # The button only cares bout mouse-related events (or no events, if it is invisible)
-            return []
-
         retVal = []
 
-        hasExited = False
-        if not self.mouseOverButton and self._rect.collidepoint(eventObj.pos):
-            # if mouse has entered the button:
-            self.mouseOverButton = True
-            self.mouseEnter(eventObj)
-            retVal.append('enter')
-        elif self.mouseOverButton and not self._rect.collidepoint(eventObj.pos):
-            # if mouse has exited the button:
-            self.mouseOverButton = False
-            hasExited = True # call mouseExit() later, since we want mouseMove() to be handled before mouseExit()
+        # mouse-related events (and is visible)
+        if eventObj.type in (MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN) and self._visible:
 
-        if self._rect.collidepoint(eventObj.pos):
-            # if mouse event happened over the button:
-            if eventObj.type == MOUSEMOTION:
-                self.mouseMove(eventObj)
-                retVal.append('move')
-            elif eventObj.type == MOUSEBUTTONDOWN:
-                self.buttonDown = True
-                self.lastMouseDownOverButton = True
-                self.mouseDown(eventObj)
-                retVal.append('down')
-        else:
-            if eventObj.type in (MOUSEBUTTONUP, MOUSEBUTTONDOWN):
-                # if an up/down happens off the button, then the next up won't cause mouseClick()
+            hasExited = False
+            if not self.mouseOverButton and self._rect.collidepoint(eventObj.pos):
+                # if mouse has entered the button:
+                self.mouseOverButton = True
+                self.mouseEnter(eventObj)
+                retVal.append('enter')
+            elif self.mouseOverButton and not self._rect.collidepoint(eventObj.pos):
+                # if mouse has exited the button:
+                self.mouseOverButton = False
+                hasExited = True # call mouseExit() later, since we want mouseMove() to be handled before mouseExit()
+
+            if self._rect.collidepoint(eventObj.pos):
+                # if mouse event happened over the button:
+                if eventObj.type == MOUSEMOTION:
+                    self.mouseMove(eventObj)
+                    retVal.append('move')
+                elif eventObj.type == MOUSEBUTTONDOWN:
+                    self.buttonDown = True
+                    self.lastMouseDownOverButton = True
+                    self.mouseDown(eventObj)
+                    retVal.append('down')
+            else:
+                if eventObj.type in (MOUSEBUTTONUP, MOUSEBUTTONDOWN):
+                    # if an up/down happens off the button, then the next up won't cause mouseClick()
+                    self.lastMouseDownOverButton = False
+
+            # mouse up is handled whether or not it was over the button
+            doMouseClick = False
+            if eventObj.type == MOUSEBUTTONUP:
+                if self.lastMouseDownOverButton:
+                    doMouseClick = True
                 self.lastMouseDownOverButton = False
 
-        # mouse up is handled whether or not it was over the button
-        doMouseClick = False
-        if eventObj.type == MOUSEBUTTONUP:
-            if self.lastMouseDownOverButton:
-                doMouseClick = True
-            self.lastMouseDownOverButton = False
+                if self.buttonDown:
+                    self.buttonDown = False
+                    self.mouseUp(eventObj)
+                    retVal.append('up')
 
-            if self.buttonDown:
-                self.buttonDown = False
-                self.mouseUp(eventObj)
-                retVal.append('up')
+                if doMouseClick:
+                    self.buttonDown = False
+                    self.mouseClick(eventObj)
+                    retVal.append('click')
 
-            if doMouseClick:
-                self.buttonDown = False
-                self.mouseClick(eventObj)
-                retVal.append('click')
+            if hasExited:
+                self.mouseExit(eventObj)
+                retVal.append('exit')
 
-        if hasExited:
-            self.mouseExit(eventObj)
-            retVal.append('exit')
+            return retVal
 
-        return retVal
+        # hot-key related events (and is visible)
+        elif eventObj.type in (KEYDOWN, KEYUP) and self._visible:
+            # proceed only if a hotkey
+            if eventObj.key in self.hotkeys:
+                if eventObj.type == KEYDOWN:
+                    self.hotkeyDown(eventObj)
+                    retVal.append('hotkeydown')
+
+                if eventObj.type == KEYUP:
+                    self.hotkeyUp(eventObj)
+                    retVal.append('hotkeyup')
+
+            return retVal
+
+        else:
+            return retVal
 
     def draw(self, surfaceObj):
         """Blit the current button's appearance to the surface object."""
@@ -246,6 +265,10 @@ class PygButton(object):
     def mouseDown(self, event):
         pass # This class is meant to be overridden.
     def mouseUp(self, event):
+        pass # This class is meant to be overridden.
+    def hotkeyDown(self, event):
+        pass # This class is meant to be overridden.
+    def hotkeyUp(self, event):
         pass # This class is meant to be overridden.
 
 
