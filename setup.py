@@ -11,7 +11,7 @@ setup(
     license='BSD',
     packages=['pygbutton'],
     test_suite='tests',
-    install_requires=[],
+    install_requires=['pygame'],
     keywords="pygame button gui ui",
     classifiers=[
         'Development Status :: 4 - Beta',
